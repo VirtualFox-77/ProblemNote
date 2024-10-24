@@ -14,19 +14,23 @@
 
 对于我们公司来说，常用的API就三个：`P001`、`P002`、`D003`
 
+其中P接口用于测试连通和获取token，D003接口用以获取公司所需要的代码。 
+
 ### 2.支付宝相关API
 
 ### 3.微信相关API
 
-
+## 2、
 
 # 二、服务器相关（RockyLinux）
 
 ## 1、DockerHub停止服务问题
 
-## 2、本地安装MySQL问题
+## 2、本地安装MySQL的相关配置
 
-## 3、本地安装Redis问题
+## 3、本地安装Redis的相关配置
+
+## 4、本地安装Nginx的相关配置
 
 
 # 三、Web前端相关
@@ -43,8 +47,45 @@
 
 4. 重新执行`npm i`或者`npm install`命令
 
+## 2、下载electron-quick-start项目后没有打包输出的问题
 
-## 2、
+1. 打开PowerShell，切换到对应的文件夹，执行命令`npm install electron-packager --save-dev`
+
+2. 在`package.json`文件的`scripts`中加入`"packager": "electron-packager ./ XXX --out=./out --app-version=0.0.1 --platform=win32  --arch=x64 --ignore=node_modules --overwrite --icon=./dist/favicon.ico"`，（XXX可替换为你对应的项目名称）即：
+
+   ```json
+   {
+     "name": "electron-quick-start",
+     "version": "1.0.0",
+     "description": "A minimal Electron application",
+     "main": "main.js",
+     "scripts": {
+       "start": "electron .",
+       "packager": "electron-packager ./ XXX --out=./out --app-version=0.0.1 --platform=win32  --arch=x64 --ignore=node_modules --overwrite --icon=./dist/favicon.ico" #加入这行脚本
+     },
+     "repository": "https://github.com/electron/electron-quick-start",
+     "keywords": [
+       "Electron",
+       "quick",
+       "start",
+       "tutorial",
+       "demo"
+     ],
+     "author": "GitHub",
+     "license": "CC0-1.0",
+     "devDependencies": {
+       "electron": "^31.3.1",
+       "electron-packager": "^17.1.2"
+     }
+   }
+   ```
+
+
+## 3、
 
 
 # 四、开发杂项相关
+
+## 1、常用Git命令
+
+## 2、Typora常用快捷键及markdown语法
