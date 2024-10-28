@@ -272,8 +272,27 @@ http {
    }
    ```
 
+## 3、ruoyi-vue3利用electron-quick-start项目打包成exe
 
-## 3、
+> 建议使用`electron-build`，不要用这个！
+>
+> （但是如果已经把前端项目布署到服务器上，倒是可用这个`electron-packager`
+>
+> 关键代码就一行（嗯，你懂的）
+
+### 1) 糊弄版
+
+下载`electron-packager`并在`package.json`中的`script`模块中添加`"packager": "electron-packager . 你的应用名称 --platform=win32 --out=./out/ --arch=x64 --app-version=1.0.0 --icon=你的图标位置 --overwrite"`
+
+在`main.js`中添加`mainWindow.loadURL("http://你的应用IP:你的应用端口");`
+
+`npm run packager`回车
+
+秒了（DDDD）
+
+### 2) 正经版
+
+（^_^）
 
 
 # 四、开发杂项相关
