@@ -34,6 +34,116 @@ MQ的维护成本太高，而且作为一个后端开发，虽然对Linux很感�
   */
 ```
 
+## 3、若依的一点东西
+
+> 今天用若依框架的时候，生成出来的代码并不是很贴合我现在的开发，所以就查了查资料（问了问ChatGPT），发现还可以这么玩？所以就姑且记录一下。
+
+### 1.若依的代码生成器
+
+其实若依生成代码是有一套模板在的，就在`vm`包下。
+
+![image-20241106192745122](./assets/image-20241106192745122.png)
+
+`vm`包下包含了所有的模板类文件，若依已经帮我们分别整理好了。
+
+![image-20241106193148613](./assets/image-20241106193148613.png)
+
+```xml
+<sql id="select${ClassName}Vo">
+        select#foreach($column in $columns) ${tableAlias}.$column.columnName#if($foreach.count != $columns.size()),#end#end from ${tableName} ${tableAlias} 
+    <!-- 使用表名的简写 -->
+            left join sys_user u on ${tableAlias}.user_id = u.user_id
+            left join sys_dept d on ${tableAlias}.dept_id = d.dept_id
+</sql>
+```
+
+`mapper.xml.vm`文件中我主要是改了一下表连接，因为我的业务要求对所有数据权限进行统一管理，所以我给每条数据都绑定了`user_id`和`dept_id`（不得不说若依的RBAC是真的NICE，对我这种接近于独立开发的人来说省了大功夫了）
+
+上面的代码中，我还添加了一个`tableAlias`也就是表别名和数据范围过滤的条件。需要在`VelocityUtils`类中修改`prepareContext`方法。获取表别名的方法也放出来（就随便一写，有改进方法可以交流一下）
+
+```java
+// 获取表名的简写
+String tableAlias = extractAbbreviation(genTable.getTableName());
+
+
+VelocityContext velocityContext = new VelocityContext();
+// 将表名的简写添加到 VelocityContext
+velocityContext.put("tableAlias", tableAlias);
+velocityContext.put("dataScopePlaceholder", "<!-- 数据范围过滤 --> ${params.dataScope}");
+/**
+ * 将带有下划线的字符串提取简称
+ * @param input 带有下划线的字符串
+ * @return
+ */
+private static String extractAbbreviation(String input) {
+    // 先将输入的字符串转为小写
+    StringBuilder abbreviation = new StringBuilder();
+
+    // 遍历输入的字符串
+    boolean afterUnderscore = false;  // 标志位，表示是否遇到下划线之后
+    for (int i = 0; i < input.length(); i++) {
+        char currentChar = input.charAt(i);
+
+        if (i == 0 || afterUnderscore) {  // 如果是第一个字符，或者遇到下划线后的第一个字符
+            abbreviation.append(currentChar);  // 将字符添加到简称中
+            afterUnderscore = false;  // 重置标志
+        }
+
+        // 判断是否遇到下划线
+        if (currentChar == '_') {
+            afterUnderscore = true;  // 设置标志位
+        }
+    }
+
+    return abbreviation.toString();
+}
+```
+
+另外在`controller.java.vm`中我在`list`方法上加了`@DataScope(deptAlias = "d",userAlias = "u")`用作数据范围过滤。这样基本上就可以达到我要的效果了。
+
+### 2.用不到的ID Generator
+
+写完才发现若依有UUID生成器，想想自己这个小体量也用不上这么复杂的ID，就写了一个业务ID生成器。
+
+```java
+import com.ruoyi.common.utils.DateUtils;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Random;
+
+@Component
+@ConfigurationProperties(prefix = "ruoyi.customIdPrefix")
+public class BusinessIDGenerator {
+
+    private List<String> prefix;
+
+    public List<String> getPrefix() {
+        return prefix;
+    }
+
+    public void setPrefix(List<String> prefix) {
+        this.prefix = prefix;
+    }
+
+    public String generatorId(Integer prefixIndex) {
+        Random random = new Random();
+        //取得application.yml文件中配置好的前缀数组
+        List<String> prefix = this.getPrefix();
+        //当前时间格式化为 yyyyMMddHHmmssSSS  TIMENOWADDMS是我自己规定的 格式到毫秒
+        String dateTimeNow = DateUtils.dateTimeNow(DateUtils.TIMENOWADDMS);
+        //为了防止撞车整了个三位随机数
+        int randomNumber = random.nextInt(999);
+        String suffixes =  String.format("%03d",randomNumber);
+        //拼起来就是我自己造的ID
+        return prefix.get(prefixIndex) + dateTimeNow + suffixes;
+    }
+}
+```
+
+
+
 
 
 # 二、服务器相关（RockyLinux）
@@ -343,6 +453,7 @@ git checkout -b <新分支名> origin/<远程分支名>
 git checkout <目标分支>
 #然后merge你想合并的分支
 git merge <待合并的分支>
+git merge master --allow-unrelated-histories
 #查看合并状态
 git status
 #处理合并冲突后
