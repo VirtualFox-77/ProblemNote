@@ -30,7 +30,7 @@ MQ的维护成本太高，而且作为一个后端开发，虽然对Linux很感�
 
 ```java
 /**
-  *代码还没写好呢。
+  *代码还没写好呢。。。
   */
 ```
 
@@ -133,7 +133,7 @@ public class BusinessIDGenerator {
         List<String> prefix = this.getPrefix();
         //当前时间格式化为 yyyyMMddHHmmssSSS  TIMENOWADDMS是我自己规定的 格式到毫秒
         String dateTimeNow = DateUtils.dateTimeNow(DateUtils.TIMENOWADDMS);
-        //为了防止撞车整了个三位随机数
+        //为了防止ID碰撞又整了个三位随机数
         int randomNumber = random.nextInt(999);
         String suffixes =  String.format("%03d",randomNumber);
         //拼起来就是我自己造的ID
@@ -142,7 +142,25 @@ public class BusinessIDGenerator {
 }
 ```
 
+### 3.突然发现若依没有逻辑删除？
 
+今天算是遭了罪了，建完数据库发现所有的数据库都没有设置逻辑删除字段和启用状态字段。不得已照着数据库的表名一个一个来（alert用的头皮发麻）
+
+添加完对应的字段之后我就开始改对应实体类、Mapper、Service、Controller……
+
+若依把select的SQL（也就是我上面提到的那个VM模板生成的）整合成了一个\<SQL>标签，嗯……
+
+**一定要记得修改SQL标签内的字段名！！！！！！**
+
+**一定要记得修改SQL标签内的字段名！！！！！！**
+
+**一定要记得修改SQL标签内的字段名！！！！！！**
+
+（所以你猜我为什么要写三遍……调了一个小时的BUG发现怎么都查不到字段对应的值我就麻了，跟了一遍DEBUG才发现是查询的问题。）
+
+还有ResultMap里面的映射关系也要对应上。
+
+**嗯，下次一定记得优先跟DEBUG走一遍。**
 
 
 
