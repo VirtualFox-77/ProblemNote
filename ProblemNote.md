@@ -171,8 +171,31 @@ public class BusinessIDGenerator {
 > 之前本地（Windows 11）跑Win版的DockerDesktop就发现这个问题了，不过我开魔法之后也能用。可是最近公司搞了台新服务器，用Docker的话就绕不开这个问题了，所以思前想后我决定把应用直接装在服务器上（bushi
 >
 > 查了一些资料说从Aliyun搞一个镜像，过几天我试试，试出来了会把流程记录下来以备日后再用。
+>
+> 所有操作来自于[解决目前Docker Hub国内无法访问方法汇总](https://www.cnblogs.com/ppqppl/articles/18499797)，截止到2024.11.09，亲测可用。
 
-假装有图.jpg
+```bash
+sudo mkdir -p /etc/dockersudo tee /etc/docker/daemon.json <<-'EOF
+{
+	"registry-mirrors":[
+		"https://docker.m.daocloud.io",
+		"https ://dockerproxy.com",
+		"https://docker.mirrors.ustc.edu.cn",
+		"https://docker.nju.edu.cn'
+		]
+}
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+
+
+![image-20241109232043976](./assets/image-20241109232043976.png)
+
+![image-20241109232124023](./assets/image-20241109232124023.png)
+
+期待我们的大佬们整一个比DockerHub更NB的东西出来˃̣̣̥᷄⌓˂̣̣̥᷅ 
 
 ## 2、本地安装MySQL的相关配置
 
