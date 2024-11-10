@@ -281,95 +281,7 @@ Nginx 的配置文件通常位于 `/etc/nginx/nginx.conf`，你可以根据需�
 > CentOS好像是在 `/usr/local/nginx/conf/nginx.conf` 这个路径下。（不知道，不清楚）
 > （可能是我在CentOS上用Docker的原因吧）
 
-```bash
-# user  nobody;		#指定运行 Nginx 的用户。通常设置为没有特权的用户（如 nobody）。
-worker_processes  4; 	#设置工作进程的数量。一般建议设置为 CPU 核心数。
-pid   /run/nginx.pid; 	#指定存储 Nginx 进程 ID 的文件路径。
-
-events {
-    worker_connections  2048; 	# 每个工作进程允许的最大连接数。
-}
-http {
-    include       mime.types;
-    default_type  application/octet-stream;
-
-    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-    #                  '$status $body_bytes_sent "$http_referer" '
-    #                  '"$http_user_agent" "$http_x_forwarded_for"';
-
-    #access_log  logs/access.log  main;
-
-    sendfile        on;		# 开启高效文件传输。
-    #tcp_nopush     on;
-
-    #keepalive_timeout  0;
-    keepalive_timeout  65;		 # 设置 HTTP Keep-Alive 超时时间，单位为秒。
-
-    #gzip  on;		#这个好像是开启压缩的一个开关
-    
-    #80端口配置文件
-    server {
-        listen       80;		 # 监听 HTTP 请求的 80 端口。
-        server_name  localhost;		# 设置服务器名称，通常为域名或 IP 地址。
-
-        #charset koi8-r;
-		charset utf-8;
-		
-        #access_log  logs/host.access.log  main;
-		
-        #定义请求 URI 的处理方式。
-        location / {
-            root   /usr/share/nginx/html/dist;		 # 设定文档根目录。
-            try_files $uri $uri/ /index.html;		 # 如果请求的文件不存在，尝试访问 index.html。
-            index  index.html index.htm;		# 默认主页文件。
-        }
-		
-		#代理设置
-        location /prod-api/ {
-          proxy_set_header Host $http_host;  		# 设置请求头中的 Host 字段。
-          proxy_set_header X-Real-IP $remote_addr;	 # 设置真实 IP。
-          proxy_set_header REMOTE-HOST $remote_addr; 	# 设置远程主机字段。
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_pass http://localhost:8080/;		# 指定请求转发到的后端服务地址，将请求代理到后端服务（如应用服务器）。
-        }
-
-        #error_page  404              /404.html;
-
-        # redirect server error pages to the static page /50x.html
-        #
-        
-        #错误页面处理
-        error_page   500 502 503 504  /50x.html;
-        location = /50x.html {
-            root   html;
-        }
-
-        # proxy the PHP scripts to Apache listening on 127.0.0.1:80
-        #
-        #location ~ \.php$ {
-        #    proxy_pass   http://127.0.0.1;
-        #}
-
-        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-        #
-        #location ~ \.php$ {
-        #    root           html;
-        #    fastcgi_pass   127.0.0.1:9000;
-        #    fastcgi_index  index.php;
-        #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-        #    include        fastcgi_params;
-        #}
-
-        # deny access to .htaccess files, if Apache's document root
-        # concurs with nginx's one
-        #
-        #防止访问隐藏文件
-        location ~ /\. {
-            deny  all;
-        }
-    }
-}
-```
+[本地Nginx配置文件](..\ProblemNote\config\local-nginx.conf)
 
 ### 10.SSL证书相关问题
 
@@ -378,90 +290,32 @@ http {
 ## 5、Docker安装MySQL
 
 ```shell
-#下载最新版的MySQL
-docker pull mysql
+#先搜一下对应的镜像
+docker search mysql
+#下载最新版的MySQL latest不用加，其他版本要在冒号后加上对应版本的版本号
+docker pull mysql:latest
 
 #创建对应要存储到本机的数据文件夹
-mkdir -p /mydata/mysql/log
-mkdir -p /mydata/mysql/data
-mkdir -p /mydata/mysql/conf
+mkdir -p /mydata/mysql/{conf,data,log}
 
 #新建MySQL配置文件
 vim /mydata/mysql/conf/my.cnf
+```
 
-#my.cnf 文件内容如下
-[client]
-# 端口号
-port=3306
- 
-[mysql]
-no-beep
-default-character-set=utf8mb4
- 
-[mysqld]
-# 端口号
-port=3306
-# 数据目录
-datadir=/var/lib/mysql
-# 新模式或表时将使用的默认字符集
-character-set-server=utf8mb4
-# 默认存储引擎
-default-storage-engine=INNODB
-# 将 SQL 模式设置为严格
-sql-mode="STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
-#  最大连接数
-max_connections=1024
-# 表缓存
-table_open_cache=2000
-# 表内存
-tmp_table_size=16M
-# 线程缓存
-thread_cache_size=10
- 
-# myisam设置
-myisam_max_sort_file_size=100G
-myisam_sort_buffer_size=8M
-key_buffer_size=8M
-read_buffer_size=0
-read_rnd_buffer_size=0
- 
-# innodb设置
-innodb_flush_log_at_trx_commit=1
-innodb_log_buffer_size=1M
-innodb_buffer_pool_size=8M
-innodb_log_file_size=48M
-innodb_thread_concurrency=33
-innodb_autoextend_increment=64
-innodb_buffer_pool_instances=8
-innodb_concurrency_tickets=5000
-innodb_old_blocks_time=1000
-innodb_open_files=300
-innodb_stats_on_metadata=0
-innodb_file_per_table=1
-innodb_checksum_algorithm=0
-# 其他设置
-back_log=80
-flush_time=0
-join_buffer_size=256K
-max_allowed_packet=4M
-max_connect_errors=100
-open_files_limit=4161
-sort_buffer_size=256K
-table_definition_cache=1400
-binlog_row_event_max_size=8K
-sync_master_info=10000
-sync_relay_log=10000
-sync_relay_log_info=10000
-#my.cnf文件结束
+[Docker-MySQL配置文件](..\ProblemNote\config\docker-my.cnf)
+
+```shell
+chown -R 999:999 /mydata/mysql/log /mydata/mysql/data /mydata/mysql/conf /mydata/mysql/conf/my.cnf
 
 #docker运行容器命令
 docker run \
---name mysql \ 
--d -p 3306:3306 \
+--name mysql \
+--memory 1gb \
+-itd -p 3306:3306 \
 --restart unless-stopped \
 -v /mydata/mysql/log:/var/log/mysql \
 -v /mydata/mysql/data:/var/lib/mysql \
--v /mydata/mysql/conf:/etc/mysql \
+-v /mydata/mysql/conf/my.cnf:/etc/mysql/my.cnf \
 -v /etc/localtime:/etc/localtime:ro \
 -e MYSQL_ROOT_PASSWORD=123456 \
 mysql:latest
@@ -484,6 +338,8 @@ firewall-cmd --zone=public --add-port=3306/tcp --permanent
 firewall-cmd --reload
 ```
 
+
+
 | 命令                                                         | 描述                                                         |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | --name mysql                                                 | 规定要运行的容器的名称                                       |
@@ -498,6 +354,50 @@ firewall-cmd --reload
 最后，用数据库管理工具连接使用。
 
 ## 6、Docker安装Redis
+
+```shell
+#先搜一下对应的镜像
+docker search redis
+#拉取对应版本的镜像 这里还是最新版本
+docker pull redis
+
+mkdir -p /mydata/redis/{conf,data,log}
+#开始写配置文件
+vim /mydata/redis/conf/redis.conf
+
+```
+
+[Docker-Redis配置文件](..\ProblemNote\config\docker-redis.conf)
+
+```shell
+#一共就改了六处
+1)#bind 127.0.0.1 -::1
+2)requirepass 123456
+3)daemonize no (这个与容器冲突，无法启动)
+4)appendonly yes
+5)maxmemory 2gb
+6)dir /data
+#接着修改权限
+chown -R 999:999 /mydata/redis/log /mydata/redis/data /mydata/redis/conf /mydata/redis/conf/redis.conf
+
+#开启防火墙
+firewall-cmd --zone=public --add-port=6379/tcp --permanent
+firewall-cmd --reload
+#docker运行
+docker run \
+--restart=unless-stopped \
+-itd -p 6379:6379 \
+--name redis \
+-v /mydata/redis/conf:/etc/redis \
+-v /mydata/redis/data:/data \
+-v /mydata/redis/log/redis-server.log:/var/log/redis/redis-server.log \
+redis:latest redis-server /etc/redis/redis.conf
+#查看状态
+docker ps -a 
+
+```
+
+daemonize no (这个与容器冲突，无法启动) 找这个错找了一下午，疯了我真是。
 
 
 
