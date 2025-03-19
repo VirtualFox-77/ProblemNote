@@ -175,14 +175,15 @@ public class BusinessIDGenerator {
 > 所有操作来自于[解决目前Docker Hub国内无法访问方法汇总](https://www.cnblogs.com/ppqppl/articles/18499797)，截止到2024.11.09，亲测可用。
 
 ```bash
-sudo mkdir -p /etc/dockersudo tee /etc/docker/daemon.json <<-'EOF
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json <<-'EOF'
 {
-	"registry-mirrors":[
-		"https://docker.m.daocloud.io",
-		"https ://dockerproxy.com",
-		"https://docker.mirrors.ustc.edu.cn",
-		"https://docker.nju.edu.cn'
-		]
+  "registry-mirrors": [
+    "https://docker.m.daocloud.io",
+    "https://dockerproxy.com",
+    "https://docker.mirrors.ustc.edu.cn",
+    "https://docker.nju.edu.cn"
+  ]
 }
 EOF
 sudo systemctl daemon-reload
@@ -386,11 +387,12 @@ firewall-cmd --reload
 #docker运行
 docker run \
 --restart=unless-stopped \
--itd -p 6379:6379 \
+-itd \
+-p 6379:6379 \
 --name redis \
 -v /mydata/redis/conf:/etc/redis \
 -v /mydata/redis/data:/data \
--v /mydata/redis/log/redis-server.log:/var/log/redis/redis-server.log \
+-v /mydata/redis/log:/var/log/redis \
 redis:latest redis-server /etc/redis/redis.conf
 #查看状态
 docker ps -a 
@@ -402,6 +404,68 @@ daemonize no (这个与容器冲突，无法启动) 找这个错找了一下午�
 
 
 ## 7、Docker安装RocketMQ
+
+
+
+> 参考自官网的Docker部署Rocket MQ
+>
+> https://rocketmq.apache.org/zh/docs/quickStart/02quickstartWithDocker
+
+
+
+```bash
+#这里以本地的服务为例，
+docker pull apache/rocketmq:5.3.1
+#等待下载完成（下不下来的可以参考二、1.）
+#创建docker容器网络
+docker network create rocketmq
+
+# 启动 NameServer
+docker run -d --name rmqnamesrv -p 9876:9876 --network rocketmq apache/rocketmq:5.3.1 sh mqnamesrv
+
+# 验证 NameServer 是否启动成功
+docker logs -f rmqnamesrv
+
+#要在/home/rocketmq/rocketmq-5.3.1/conf/ 目录下
+# 配置 Broker 的IP地址
+echo "brokerIP1=127.0.0.1" > broker.conf
+
+# 启动 Broker 和 Proxy
+docker run -d \
+--name rmqbroker \
+--network rocketmq \
+-p 10912:10912 -p 10911:10911 -p 10909:10909 \
+-p 8080:8080 -p 8081:8081 \
+-e "NAMESRV_ADDR=rmqnamesrv:9876" \
+-v ./broker.conf:/home/rocketmq/rocketmq-5.3.1/conf/broker.conf \
+apache/rocketmq:5.3.1 sh mqbroker --enable-proxy \
+-c /home/rocketmq/rocketmq-5.3.1/conf/broker.conf
+
+#Tips：冒号前面的的是宿主机端口，后面的是容器端口，容器端口目前不知道怎么更改，宿主机就看你想用什么端口啦
+# 开放 10912 端口
+sudo firewall-cmd --zone=public --add-port=10912/tcp --permanent
+
+# 开放 10911 端口
+sudo firewall-cmd --zone=public --add-port=10911/tcp --permanent
+
+# 开放 10909 端口
+sudo firewall-cmd --zone=public --add-port=10909/tcp --permanent
+
+# 开放 8080 端口
+sudo firewall-cmd --zone=public --add-port=8080/tcp --permanent
+
+# 开放 8081 端口
+sudo firewall-cmd --zone=public --add-port=8081/tcp --permanent
+
+
+# 验证 Broker 是否启动成功
+docker exec -it rmqbroker bash -c "tail -n 10 /home/rocketmq/logs/rocketmqlogs/proxy.log"
+
+#至此一个简单的单节点副本的RocketMQ集群已经部署完成，我们可以利用脚本进行简单的消息收发。
+
+```
+
+
 
 
 
