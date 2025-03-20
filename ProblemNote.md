@@ -354,6 +354,146 @@ firewall-cmd --reload
 
 最后，用数据库管理工具连接使用。
 
+### 5.1、创建MySQL新用户并进行授权访问
+
+>                             版权声明：本文为博主转载文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接和本声明。
+>
+> 原文链接：https://blog.csdn.net/Hong_pro/article/details/143746623
+
+#### 5.1.1、创建用户
+
+首先使用root用户登录数据库
+
+```bash
+mysql -u root -p
+```
+
+然后创建一个新用户。假设你想创建一个名为 `newuser`，密码为 `password` 的用户：
+
+```sql
+CREATE USER 'newuser'@'localhost' IDENTIFIED BY 'password';
+```
+
+这里，`'localhost'` 表示该用户只能从本地连接到数据库。如果你希望该用户能够从任何 IP 地址连接，可以使用 `'%'` 代替 `'localhost'`，或者指定IP：
+
+```sql
+CREATE USER 'newuser'@'192.168.0.2' IDENTIFIED BY 'password';
+```
+
+#### 5.1.2、授权用户权限
+
+创建用户后，你可以授权该用户访问特定的数据库和执行相应的操作。
+
+##### 授予所有权限
+
+如果你想授予 `newuser` 所有权限（例如对数据库 `testdb` 的所有权限），你可以执行以下命令：
+
+```sql
+GRANT ALL PRIVILEGES ON testdb.* TO 'newuser'@'localhost';
+```
+
+- `testdb.*` 表示授予对数据库 `testdb` 中所有表的权限。
+- `'newuser'@'localhost'` 指定了用户名和主机，意味着该用户只能从本地主机连接。如果你希望该用户能够从任何 IP 地址连接，可以使用 `'%'` 代替 `'localhost'`，或者指定IP。
+
+##### 授予特定权限
+
+你还可以只授予特定的权限，例如：
+
+- `SELECT` 权限：只允许查询数据
+- `INSERT` 权限：只允许插入数据
+- `UPDATE` 权限：只允许更新数据
+- `DELETE` 权限：只允许删除数据
+
+例如，只授予 `newuser` 在` testdb` 数据库上的查询和插入权限：
+
+```sql
+GRANT SELECT, INSERT ON testdb.* TO 'newuser'@'localhost';
+```
+
+##### 常用权限
+
+> #### 全局权限 (Global Privileges)
+>
+> 这些权限适用于 MySQL 服务器的所有数据库。
+>
+> - `ALL PRIVILEGES`：授予所有权限，相当于所有其他权限的集合。
+> - `CREATE`：允许创建新数据库。
+> - `DROP`：允许删除数据库。
+> - `DELETE`：允许删除数据库中的记录。
+> - `PROCESS`：允许查看其他用户的活动和进程。
+> - `SHOW DATABASES`：允许查看服务器上所有数据库。
+> - `SUPER`：允许执行一些高级操作，如终止查询、设置全局系统变量等。
+> - `RELOAD`：允许重新加载授权表，刷新日志文件等。
+> - `SHUTDOWN`：允许关闭 MySQL 服务。
+> - `FILE`：允许读取和写入文件，通常用于导入/导出数据。
+> - `SHOW VIEW`：允许查看视图定义。
+>
+> #### 数据库级权限 (Database Privileges)
+>
+> 这些权限适用于单个数据库中的所有表、视图、存储过程等。
+>
+> - `CREATE`：允许在该数据库中创建表、视图等。
+> - `ALTER`：允许修改数据库中的表结构。
+> - `DROP`：允许删除数据库中的表或视图。
+> - `INDEX`：允许创建和删除索引。
+> - `CREATE TEMPORARY TABLES`：允许创建临时表。
+> - `LOCK TABLES`：允许锁定表（用于多线程操作时确保数据一致性）。
+>
+> #### 表级权限 (Table Privileges)
+>
+> 这些权限适用于数据库中的单个表。
+>
+> - `SELECT`：允许读取表中的数据。
+> - `INSERT`：允许向表中插入数据。
+> - `UPDATE`：允许更新表中的数据。
+> - `DELETE`：允许删除表中的数据。
+> - `CREATE`：允许在该表上创建触发器和视图。
+> - `DROP`：允许删除表。
+> - `ALTER`：允许修改表的结构。
+> - `INDEX`：允许在表上创建或删除索引。
+> - `CREATE VIEW`：允许在该表上创建视图。
+> - `SHOW VIEW`：允许查看视图的结构。
+>
+> #### 列级权限 (Column Privileges)
+>
+> 这些权限适用于表中的单个列。
+>
+> - `SELECT`：允许读取该列的数据。
+> - `INSERT`：允许插入数据到该列。
+> - `UPDATE`：允许更新该列的数据。
+
+#### 5.1.3、刷新用户权限
+
+授权完成后，执行以下命令以使权限立即生效：
+
+```sql
+FLUSH PRIVILEGES;
+```
+
+#### 5.1.4、查看用户权限
+
+如果你想查看某个用户的权限，可以使用以下命令：
+
+```mysql
+SHOW GRANTS FOR 'newuser'@'localhost';
+```
+
+#### 5.1.5、删除用户
+
+如果你要删除用户，可以使用以下命令：
+
+```sql
+DROP USER 'newuser'@'localhost';
+```
+
+#### 总结：
+
+使用 `CREATE USER` 创建新用户。
+使用 `GRANT` 授予权限。
+使用 `FLUSH PRIVILEGES` 刷新权限。
+使用 `SHOW GRANTS` 查看用户权限。
+使用 `DROP USER` 删除用户。
+
 ## 6、Docker安装Redis
 
 ```shell
