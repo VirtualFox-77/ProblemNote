@@ -605,6 +605,60 @@ docker exec -it rmqbroker bash -c "tail -n 10 /home/rocketmq/logs/rocketmqlogs/p
 
 ```
 
+## 8、Docker安装Nacos
+
+### 8.1、单机模式部署
+
+#### 8.1.1、创建配置文件
+
+首先创建配置目录
+
+```bash
+mkdir -p /mydata/nacos/{data,logs}
+cd /mydata/nacos
+vim docker-compose.yml
+```
+
+[Nacos-Docker-Compose.yml](..\ProblemNote\config\docker-compose.yaml)
+
+```yaml
+version: '3.8'
+
+services:
+  nacos:
+    image: nacos/nacos-server:latest  # 使用最新版本镜像
+    container_name: nacos-single
+    environment:
+      - MODE=standalone  # 单机模式
+      - PREFER_IPv4_STACK=true
+    ports:
+      - "8848:8848"     # Nacos 服务端口
+      - "9848:9848"     # Nacos 安全端口（可选）
+    volumes:
+      - ./data:/home/nacos/data  # 持久化数据
+      - ./logs:/home/nacos/logs  # 日志目录
+    restart: always
+```
+
+#### 8.1.2、启动服务
+
+```bash
+docker-compose up -d #docker v20.0以前的方式
+docker compose up -d #docker v20.0+的方式
+```
+
+#### 8.1.3、验证服务
+
+- ##### 访问控制台
+
+```html
+http://localhost:8848/nacos
+```
+
+默认账号密码：`nacos/nacos`
+
+
+
 
 
 

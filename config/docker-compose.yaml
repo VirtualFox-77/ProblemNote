@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  nacos:
+    image: nacos/nacos-server:latest  # 使用最新版本镜像
+    container_name: nacos-single
+    environment:
+      - MODE=standalone  # 单机模式
+      - PREFER_IPv4_STACK=true
+    ports:
+      - "8848:8848"     # Nacos 服务端口
+      - "9848:9848"     # Nacos 安全端口（可选）
+    volumes:
+      - ./data:/mydata/nacos/data  # 持久化数据
+      - ./logs:/mydata/nacos/logs  # 日志目录
+    restart: always
