@@ -4,7 +4,6 @@ port=3306
  
 [mysql]
 no-beep
-default-character-set=utf8mb4
  
 [mysqld]
 # 端口号
@@ -16,29 +15,30 @@ character-set-server=utf8mb4
 # 默认存储引擎
 default-storage-engine=INNODB
 # 将 SQL 模式设置为严格
-#sql-mode="STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
+sql_mode="STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION"
+
 #  最大连接数
 max_connections=1024
 # 表缓存
 table_open_cache=2000
 # 表内存
-tmp_table_size=16M
+tmp_table_size=128M
 # 线程缓存
-thread_cache_size=10
+thread_cache_size=100
  
 # myisam设置
 myisam_max_sort_file_size=100G
 myisam_sort_buffer_size=8M
 key_buffer_size=8M
-read_buffer_size=0
+read_buffer_size=8KB
 read_rnd_buffer_size=0
  
 # innodb设置
 innodb_flush_log_at_trx_commit=1
-innodb_log_buffer_size=1M
-innodb_buffer_pool_size=8M
-innodb_log_file_size=48M
-innodb_thread_concurrency=33
+innodb_log_buffer_size=256M
+innodb_buffer_pool_size=2G
+innodb_redo_log_capacity=64M
+innodb_thread_concurrency=4
 innodb_autoextend_increment=64
 innodb_buffer_pool_instances=8
 innodb_concurrency_tickets=5000
@@ -50,7 +50,7 @@ innodb_checksum_algorithm=0
 # 其他设置
 back_log=80
 flush_time=0
-join_buffer_size=256K
+join_buffer_size=4M
 max_allowed_packet=4M
 max_connect_errors=100
 open_files_limit=4161
