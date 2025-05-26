@@ -660,9 +660,15 @@ http://localhost:8848/nacos
 
 
 
+## 9、Linux SSH远程服务器 上传文件/文件夹
 
+```bash
+rsync -avz /path/to/files root@192.168.0.2:/path/to/files/remote/
+```
 
+其实就是传files(可能是个文件，也可能是个文件夹)，到远程的`remote`文件夹下
 
+如果`files`后加上`/`，变成`/path/to/files/`,则代表只复制文件夹内容，不包括 `files` 文件夹本身。
 
 
 
