@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   nacos:
-    image: nacos/nacos-server:latest  # 使用最新版本镜像
+    image: nacos/nacos-server:v2.5.0  # 使用2.5.0 高了有问题
     container_name: nacos-single
     environment:
       - MODE=standalone  # 单机模式
@@ -11,6 +9,7 @@ services:
       - "8848:8848"     # Nacos 服务端口
       - "9848:9848"     # Nacos 安全端口（可选）
     volumes:
-      - ./data:/mydata/nacos/data  # 持久化数据
-      - ./logs:/mydata/nacos/logs  # 日志目录
+      - ./data:/home/nacos/data  # 持久化数据
+      - ./logs:/home/nacos/logs  # 日志目录
     restart: always
+    mem_limit: 2g  # 限制容器内存为 2GB

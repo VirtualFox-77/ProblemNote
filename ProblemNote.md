@@ -311,7 +311,7 @@ sudo chown -R 999:999 ~/Documents/mydata/mysql/log ~/Documents/mydata/mysql/data
 #docker运行容器命令
 docker run \
 --name mysql \
---memory 4gb \
+--memory 2gb \
 -itd -p 3306:3306 \
 --restart unless-stopped \
 -v ~/Documents/mydata/mysql/log:/var/log/mysql \
@@ -329,7 +329,7 @@ docker exec -it mysql /bin/bash
 mysql -uroot -p
 show databases;
 use mysql;
-GRANT ALL PRIVILEGES ON dbname.* TO 'root'@'%' IDENTIFIED BY '123456';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 exit;
 exit
@@ -527,6 +527,7 @@ firewall-cmd --reload
 #docker运行
 docker run \
 --restart=unless-stopped \
+--memory 2gb \
 -itd -p 6379:6379 \
 --name redis \
 -v ~/Documents/mydata/redis/conf:/etc/redis \
@@ -621,17 +622,13 @@ vim docker-compose.yml
 [Nacos-Docker-Compose.yml](..\ProblemNote\config\docker-compose.yaml)
 
 ```yaml
-version: '3.8'
-
 services:
   nacos:
-    image: nacos/nacos-server:latest  # 使用最新版本镜像
+    image: nacos/nacos-server:v2.5.0  # 使用2.5.0 高了有问题
     container_name: nacos-single
     environment:
       - MODE=standalone  # 单机模式
       - PREFER_IPv4_STACK=true
-      - NACOS_AUTH_ENABLE=true
- 	  - NACOS_AUTH_TOKEN=VGhpc0lzTXlDdXN0b21TZWNyZXRLZXkwMTIzNDU2Nzg=
     ports:
       - "8848:8848"     # Nacos 服务端口
       - "9848:9848"     # Nacos 安全端口（可选）
@@ -639,6 +636,7 @@ services:
       - ./data:/home/nacos/data  # 持久化数据
       - ./logs:/home/nacos/logs  # 日志目录
     restart: always
+    mem_limit: 2g  # 限制容器内存为 2GB
 ```
 
 #### 8.1.2、启动服务
