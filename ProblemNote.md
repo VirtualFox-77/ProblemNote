@@ -619,24 +619,34 @@ cd ~/Documents/mydata/nacos
 vim docker-compose.yml
 ```
 
-[Nacos-Docker-Compose.yml](..\ProblemNote\config\docker-compose.yaml)
-
 ```yaml
 services:
   nacos:
-    image: nacos/nacos-server:v2.5.0  # 使用2.5.0 高了有问题
+    image: nacos/nacos-server:v2.5.0
     container_name: nacos-single
     environment:
       - MODE=standalone  # 单机模式
       - PREFER_IPv4_STACK=true
+      - SPRING_DATASOURCE_PLATFORM=mysql
+      - MYSQL_SERVICE_HOST=192。168.0.2
+      - MYSQL_SERVICE_DB_NAME=nacos
+      - MYSQL_SERVICE_PORT=3306
+      - MYSQL_SERVICE_USER=nacos
+      - MYSQL_SERVICE_PASSWORD=nacos
+      - MYSQL_SERVICE_DB_PARAM=characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      - NACOS_AUTH_IDENTITY_KEY=nacos
+      - NACOS_AUTH_IDENTITY_VALUE=nacos
+      - NACOS_AUTH_TOKEN=SecretKey012345678901234567890123456789012345678901234567890123456789
+      - NACOS_AUTH_ENABLE=true
+      - NACOS_AUTH_TOKEN_EXPIRE_SECONDS=18000
     ports:
       - "8848:8848"     # Nacos 服务端口
       - "9848:9848"     # Nacos 安全端口（可选）
     volumes:
       - ./data:/home/nacos/data  # 持久化数据
       - ./logs:/home/nacos/logs  # 日志目录
-    restart: always
-    mem_limit: 2g  # 限制容器内存为 2GB
+    restart: unless-stopped
+    mem_limit: 2g
 ```
 
 #### 8.1.2、启动服务
