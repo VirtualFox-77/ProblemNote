@@ -514,7 +514,7 @@ vim ~/Documents/mydata/redis/conf/redis.conf
 #一共就改了六处
 1)#bind 127.0.0.1 -::1
 2)requirepass 123456
-3)daemonize no (这个与容器冲突，无法启动)
+3)daemonize no #这个与容器冲突，无法启动
 4)appendonly yes
 5)maxmemory 2gb
 6)dir /data
@@ -677,6 +677,114 @@ rsync -avz /path/to/files root@192.168.0.2:/path/to/files/remote/
 其实就是传files(可能是个文件，也可能是个文件夹)，到远程的`remote`文件夹下
 
 如果`files`后加上`/`，变成`/path/to/files/`,则代表只复制文件夹内容，不包括 `files` 文件夹本身。
+
+> 参考自官网的Docker部署Rocket MQ
+>
+> https://rocketmq.apache.org/zh/docs/quickStart/02quickstartWithDocker
+
+
+
+```bash
+#这里以本地的服务为例，
+docker pull apache/rocketmq:5.3.1
+#等待下载完成（下不下来的可以参考二、1.）
+#创建docker容器网络
+docker network create rocketmq
+
+# 启动 NameServer
+docker run -d --name rmqnamesrv -p 9876:9876 --network rocketmq apache/rocketmq:5.3.1 sh mqnamesrv
+
+# 验证 NameServer 是否启动成功
+docker logs -f rmqnamesrv
+
+#要在/home/rocketmq/rocketmq-5.3.1/conf/ 目录下
+# 配置 Broker 的IP地址
+echo "brokerIP1=127.0.0.1" > broker.conf
+
+# 启动 Broker 和 Proxy
+docker run -d \
+--name rmqbroker \
+--network rocketmq \
+-p 10912:10912 -p 10911:10911 -p 10909:10909 \
+-p 8080:8080 -p 8081:8081 \
+-e "NAMESRV_ADDR=rmqnamesrv:9876" \
+-v ./broker.conf:/home/rocketmq/rocketmq-5.3.1/conf/broker.conf \
+apache/rocketmq:5.3.1 sh mqbroker --enable-proxy \
+-c /home/rocketmq/rocketmq-5.3.1/conf/broker.conf
+
+#Tips：冒号前面的的是宿主机端口，后面的是容器端口，容器端口目前不知道怎么更改，宿主机就看你想用什么端口啦
+# 开放 10912 端口
+sudo firewall-cmd --zone=public --add-port=10912/tcp --permanent
+
+# 开放 10911 端口
+sudo firewall-cmd --zone=public --add-port=10911/tcp --permanent
+
+# 开放 10909 端口
+sudo firewall-cmd --zone=public --add-port=10909/tcp --permanent
+
+# 开放 8080 端口
+sudo firewall-cmd --zone=public --add-port=8080/tcp --permanent
+
+# 开放 8081 端口
+sudo firewall-cmd --zone=public --add-port=8081/tcp --permanent
+
+
+# 验证 Broker 是否启动成功
+docker exec -it rmqbroker bash -c "tail -n 10 /home/rocketmq/logs/rocketmqlogs/proxy.log"
+
+#至此一个简单的单节点副本的RocketMQ集群已经部署完成，我们可以利用脚本进行简单的消息收发。
+
+```
+
+
+
+## 8、把命令行运行的Jar转为Service启动
+
+原来公司服务器上一直跑服务都是自己手动输入shell命令：`nohup /opt/jdk8/bin/java -Xms 512m -Xmx 1024m -jar /usr/local/java-server/xxx.jar > /var/log/java/xxx/app.log 2>&1 &` 最近不知道经理抽什么风，一天之内上了好几次线。就算每次用方向键找命令也是个麻烦事，何况要输入。
+
+也就着把Jenkins上线的机会，把一直以来手动上线的操作简化一下。
+
+```shell
+#新建一个文件
+sudo vim /etc/systemd/system/xxx.service
+```
+
+在`vim`中，粘贴如下
+
+```ini
+[Unit]
+Description=Your Application Description~
+After=network.target
+
+[Service]
+User=root
+#Environment
+Environment=JAVA_HOME=/opt/jdk8
+ExecStart=/usr/bin/java -jar /path/to/your/application/my-application.jar
+Restart=always
+SuccessExitStatus=143
+RestartSec=10
+StandardOutput=append:/var/log/java/xxxx/app.log
+StandardError=append:/var/log/java/xxxx/app-error.log
+
+
+[Install]
+WantedBy=multi-user.target
+```
+
+详细解释一下这个文件
+
+### Unit: This section is used to define metadata and dependencies for the service unit.
+
+`Description`就不解释了，就是一个服务描述。
+
+`After`和`Before`这部分是为了确保表示您的服务将在指定的服务或目标**之前**或**之后**启动。，比如上面的代码是确保服务可以在网络启动之后进行联网访问的。除此之外，还有显式依赖于另一个服务的`Requires`，即仅当所需服务启动时，本服务才会启动。还有`Wants`，是一个不严格的依赖启动，我感觉像是在启动本服务之前象征性的启动一下依赖的服务，要是启动了你好我好大家好，启动不了也没什么问题。
+
+### Service: This section defines the behavior of the service itself.
+
+
+
+
 
 
 
