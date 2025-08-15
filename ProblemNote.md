@@ -738,7 +738,7 @@ docker exec -it rmqbroker bash -c "tail -n 10 /home/rocketmq/logs/rocketmqlogs/p
 
 
 
-## 8、把命令行运行的Jar转为Service启动
+## 10、把命令行运行的Jar转为Service启动
 
 原来公司服务器上一直跑服务都是自己手动输入shell命令：`nohup /opt/jdk8/bin/java -Xms 512m -Xmx 1024m -jar /usr/local/java-server/xxx.jar > /var/log/java/xxx/app.log 2>&1 &` 最近不知道经理抽什么风，一天之内上了好几次线。就算每次用方向键找命令也是个麻烦事，何况要输入。
 
@@ -758,7 +758,7 @@ After=network.target
 
 [Service]
 User=root
-#Environment
+#EnvironmentSettings
 Environment=JAVA_HOME=/opt/jdk8
 ExecStart=/usr/bin/java -jar /path/to/your/application/my-application.jar
 Restart=always
@@ -776,13 +776,43 @@ WantedBy=multi-user.target
 
 ### Unit: This section is used to define metadata and dependencies for the service unit.
 
-`Description`就不解释了，就是一个服务描述。
+- `Description`就不解释了，就是一个服务描述。
 
-`After`和`Before`这部分是为了确保表示您的服务将在指定的服务或目标**之前**或**之后**启动。，比如上面的代码是确保服务可以在网络启动之后进行联网访问的。除此之外，还有显式依赖于另一个服务的`Requires`，即仅当所需服务启动时，本服务才会启动。还有`Wants`，是一个不严格的依赖启动，我感觉像是在启动本服务之前象征性的启动一下依赖的服务，要是启动了你好我好大家好，启动不了也没什么问题。
+- `After`和`Before`这部分是为了确保表示您的服务将在指定的服务或目标**之前**或**之后**启动。，比如上面的代码是确保服务可以在网络启动之后进行联网访问的。除此之外，还有显式依赖于另一个服务的`Requires`，即仅当所需服务启动时，本服务才会启动。还有`Wants`，是一个不严格的依赖启动，我感觉像是在启动本服务之前象征性的启动一下依赖的服务，要是启动了你好我好大家好，启动不了也没什么问题。
 
 ### Service: This section defines the behavior of the service itself.
 
+- `User`：定义运行服务的用户。
+- `Environment`：设置服务的环境变量
+- `ExecStart`：启动服务时要运行的命令。
+- `Restart`：定义服务的重启行为。这可确保服务在意外崩溃或停止时自动重启。当定义为`always`时，服务将尝试无限期地重新启动，直到手动停止或系统关闭。如果希望失败时不重启，可以使用`Restart=no`。
+- `SuccessExitStatus`：指定指示成功完成的退出状态代码。如果应用程序需要正常退出状态代码为非零，可以配置此设置以包含该代码。
+- `RestartSec`：定义重新启动失败服务之前的等待时间（以秒为单位）。在这种情况下，会等待设置的秒数，然后在发生故障或停止事件后尝试重新启动服务。
+- `StandardOutput`和`StandardError`：将输出和错误流重定向到日志文件或系统日志。可以用`>`代替`append`关键字，将追加日志文件改为覆盖日志文件。
 
+### Install: This section defines the installation and startup behavior for the service.
+
+- `WantedBy`定义了在系统启动期间何时应启动服务。`multi-user.target`是一个典型的运行级别。其中启动了系统的绝大多数服务（即当系统准备好供多个用户使用时）。这用于典型的系统服务。
+
+设置好 `.service`文件之后，系统已经可以通过`systemctl`命令来管理自定义的服务了，此时我们再通过`systemctl`相关命令，即可对相关服务进行管理。
+
+## 11、设置Jenkins相关配置
+
+### 1、本机构建从源码到Maven打包项目发布自动化流程
+
+- 安装配置Jenkins
+- 首先配置好基本的环境（包括JDK、Maven、Git私钥）
+  - JDK
+  - Maven
+  - Git私钥
+- 编写Jenkins编译打包部署脚本
+  - 配置Jenkins环境变量
+  - 编写Jenkins脚本
+- 测试构建和打包
+
+
+
+### 2、远程连接其他服务器构建自动化流程
 
 
 
@@ -795,7 +825,7 @@ WantedBy=multi-user.target
 
 1. 更换国内镜像（淘宝镜像）
 
-   在CMD中输入`npm config set registry https://registry.npmmirror.com`
+   在Shell中输入`npm config set registry https://registry.npmmirror.com`
 
 2. 在项目根目录下新建名为`.npmrc`的文件
 
