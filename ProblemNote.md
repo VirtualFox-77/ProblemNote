@@ -306,7 +306,7 @@ vim ~/Documents/mydata/mysql/conf/my.cnf
 [Docker-MySQL配置文件](..\ProblemNote\config\docker-my.cnf)
 
 ```shell
-sudo chown -R 999:999 ~/Documents/mydata/mysql/log ~/Documents/mydata/mysql/data ~/Documents/mydata/mysql/conf ~/Documents/mydata/mysql/conf/my.cnf
+sudo chown -R kevin:kevin ~/Documents/mydata/mysql/log ~/Documents/mydata/mysql/data ~/Documents/mydata/mysql/conf ~/Documents/mydata/mysql/conf/my.cnf
 
 #docker运行容器命令
 docker run \
@@ -319,7 +319,7 @@ docker run \
 -v ~/Documents/mydata/mysql/conf/my.cnf:/etc/mysql/my.cnf \
 -v /etc/localtime:/etc/localtime:ro \
 -e MYSQL_ROOT_PASSWORD=123456 \
-mysql:latest
+mysql/mysql-server:8.0
 
 #查看运行状态，确认启动成功
 docker ps | grep mysql
@@ -498,9 +498,9 @@ DROP USER 'newuser'@'localhost';
 
 ```shell
 #先搜一下对应的镜像
-docker search redis
+docker search redis:8.2.0
 #拉取对应版本的镜像 这里还是最新版本
-docker pull redis
+docker pull redis:8.2.0
 
 mkdir -p ~/Documents/mydata/redis/{conf,data,log}
 #开始写配置文件
@@ -519,7 +519,7 @@ vim ~/Documents/mydata/redis/conf/redis.conf
 5)maxmemory 2gb
 6)dir /data
 #接着修改权限
-sudo chown -R 999:999 ~/Documents/mydata/redis/log ~/Documents/mydata/redis/data ~/Documents/mydata/redis/conf ~/Documents/mydata/redis/conf/redis.conf
+sudo chown -R kevin:kevin ~/Documents/mydata/redis/log ~/Documents/mydata/redis/data ~/Documents/mydata/redis/conf ~/Documents/mydata/redis/conf/redis.conf
 
 #开启防火墙
 firewall-cmd --zone=public --add-port=6379/tcp --permanent
@@ -533,7 +533,7 @@ docker run \
 -v ~/Documents/mydata/redis/conf:/etc/redis \
 -v ~/Documents/mydata/redis/data:/data \
 -v ~/Documents/mydata/redis/log:/var/log/redis \
-redis:latest redis-server /etc/redis/redis.conf
+redis:8.2.0 redis-server /etc/redis/redis.conf
 #查看状态
 docker ps -a 
 
