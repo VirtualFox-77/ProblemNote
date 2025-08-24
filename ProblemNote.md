@@ -800,21 +800,120 @@ WantedBy=multi-user.target
 
 ### 1、本机构建从源码到Maven打包项目发布自动化流程
 
-- 安装配置Jenkins
+- 安装配置Jenkins（前期准备工作）
+
+  - Jenkins用户权限
+
+    - 设置jenkins用户 用mv、cp、ssh、scp不用sudo
+
+      ```bash
+      #以下命令是以RockyLinux 9.4版本为例
+      #以 root 用户新建一个文件
+      sudo vim /etc/sudoers.d/jenkins
+      #写入文件，允许 Jenkins 用户执行特定命令：
+      jenkins ALL=(ALL) NOPASSWD: \
+          /usr/bin/systemctl stop xxxx.service, \
+          /usr/bin/systemctl start xxxx.service, \
+          /usr/bin/systemctl restart xxxx.service, \
+          /usr/bin/systemctl status xxxx.service, \
+          /usr/bin/mv /your/depoly/path/your-service.jar /your/depoly/path/your-service.jar.bak.$(date +%Y%m%d%H%M%S), \
+          /usr/bin/cp -f /var/lib/jenkins/workspace/your-build-projects-name/your-projects-modules/target/target.jar /your/depoly/path/your-service.jar, \
+          /usr/bin/bash /your/depoly/path/your-service-deploy.sh, \
+          /usr/bin/bash /your/depoly/path/your-service-deploy.sh
+      #这行配置表示 Jenkins 用户可以在不输入密码的情况下运行 /bin/mv、/bin/cp、/usr/bin/ssh 和 /usr/bin/scp
+      :wq
+      ```
+
+  - 移交命令行启动到系统服务管理（详见上一节）
+
 - 首先配置好基本的环境（包括JDK、Maven、Git私钥）
   - JDK
   - Maven
-  - Git私钥
+  - Git私钥（详情见第四部分第一小章节）
+
 - 编写Jenkins编译打包部署脚本
   - 配置Jenkins环境变量
+
+    - 设置JDK和Maven环境变量到构建的项目（没有的话需要到全局设置中添加）
+
+      ![image-20250824172203187](./assets/image-20250824172203187.png)
+	  
+	  - 设置Git项目地址和要追踪的分支
+    
+       ![image-20250824172032463](./assets/image-20250824172032463.png)
+    
+    - 设置定时构建和发布
+
+      ![image-20250824172335071](./assets/image-20250824172335071.png)
+
+     
+
   - 编写Jenkins脚本
-- 测试构建和打包
 
-
+    - 对旧版本的包做备份
+  
+    - 复制打好的包到目标文件夹
+  
+      ```bash
+      #!/bin/bash
+      export PATH=/your/maven/home:$PATH
+      export PATH=/your/jdk/home:$PATH
+      export BUILD_ENV=your-settings
+      mvn clean package -Dspring.profiles.active=${BUILD_ENV}
+      
+      TARGET="/var/lib/jenkins/workspace/your-build-projects-name/your-projects-modules/target/target.jar"
+      DEPLOY="/your/depoly/path/your-service.jar"
+      SERVICE_NAME="your-service.service"
+      BACKUP_FILE="$DEPLOY_PATH.bak.$(date +%Y%m%d%H%M%S)"
+      
+      echo "Stopping old service..."
+      sudo /usr/bin/systemctl stop "$SERVICE_NAME"
+      
+      echo "Backing up old jar..."
+      sudo /usr/bin/mv "$DEPLOY" "$BACKUP_FILE"
+      
+      echo "move new jar..."
+      sudo /usr/bin/cp -f "$TARGET" "$DEPLOY"
+      
+      echo "Starting new service..."
+      sudo /usr/bin/systemctl start "$SERVICE_NAME"
+      
+      echo "Deployment Complete ~"
+      ```
+  
+- 测试构建和发布
 
 ### 2、远程连接其他服务器构建自动化流程
 
+> 除去在Jenkins启动前多一步将打包好的包上传到对应的服务器然后SSH登陆对应的服务器重启服务，其他操作基本一致，不过要在两个服务器上设置。
+>
+> 感觉应该有更简单的方法。目前这种操作已经基本满足我的日常使用，我也不是专业运维，研究到这感觉已经能基本应付小微公司的上线需求。
 
+值的一说是，使用`scp`时有可能出现上传失败的情况，所以要先传到一个暂存的临时文件夹，全部上传完成后移到目标文件夹下，最后重启服务。
+
+```bash
+#!/bin/bash
+JAR_NAME="xxxxx.jar"
+SOURCE_DIR="/var/lib/jenkins/workspace/your-build-projects-name/your-projects-modules/target"
+REMOTE_HOST="user@ipaddr"
+REMOTE_TARGET="/your/deploy/path"
+SERVICE_NAME="your-service.service"
+BACKUP_FILE="$REMOTE_TARGET/$JAR_NAME.bak.$(date +%Y%m%d%H%M%S)"
+
+echo "Uploading $JAR_NAME to remote server..."
+scp "$SOURCE_DIR/$JAR_NAME" "$REMOTE_HOST:/tmp/"
+
+echo "echo "Backing up old jar on remote server..."
+ssh "$REMOTE_HOST" "mv -f '$REMOTE_TARGET/$JAR_NAME' '$BACKUP_FILE'"
+
+echo "Moving and overwriting $JAR_NAME in the target directory..."
+ssh "$REMOTE_HOST" "mv -f /tmp/$JAR_NAME '$REMOTE_TARGET/$JAR_NAME'"
+
+echo "Restarting the service $SERVICE_NAME..."
+ssh "$REMOTE_HOST" "systemctl restart '$SERVICE_NAME'"
+
+echo "Deployment Complete ~"
+```
 
 
 
@@ -895,7 +994,49 @@ WantedBy=multi-user.target
 
 > 初始化、克隆等等这种最基础的命令就不写了，就这两板斧，估计够用，不够用再去问ChatGPT（doge）
 
-### 1.远程仓库相关
+### 1.[Git基础配置](https://www.cnblogs.com/yuqiliu/p/12551258.html)
+
+```BASH
+#检测自己之前有没有配置
+git config user.name
+git config user.email
+#如果之前没有创建，则执行以下命令：
+git config –global user.name "xxxxxx"
+git config –global user.email "xxx@xx.xxx"
+#生成秘钥
+ssh-keygen -t rsa -C "xxxx@xx.xxx"
+#代码参数含义：
+# -t 指定密钥类型，默认是 rsa ，可以省略。
+# -C 设置注释文字，比如邮箱。
+# -f 指定密钥文件存储文件名。
+# 接着按3个回车
+
+[root@localhost ~]# ssh-keygen -t rsa       <== 建立密钥对，-t代表类型，有RSA和DSA两种
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa):   <==密钥文件默认存放位置，按Enter即可
+Created directory '/root/.ssh'.
+Enter passphrase (empty for no passphrase):     <== 输入密钥锁码，或直接按 Enter 留空
+Enter same passphrase again:     <== 再输入一遍密钥锁码
+Your identification has been saved in /root/.ssh/id_rsa.    <== 生成的私钥
+Your public key has been saved in /root/.ssh/id_rsa.pub.    <== 生成的公钥
+The key fingerprint is:
+SHA256:K1qy928tkk1FUuzQtlZK+poeS67vIgPvHw9lQ+KNuZ4 root@localhost.localdomain
+The key's randomart image is:
++---[RSA 2048]----+
+|           +.    |
+|          o * .  |
+|        . .O +   |
+|       . *. *    |
+|        S =+     |
+|    .    =...    |
+|    .oo =+o+     |
+|     ==o+B*o.    |
+|    oo.=EXO.     |
++----[SHA256]-----+
+#扔到对应代码托管平台的SSH Key 配置下就行了
+```
+
+### 2.远程仓库相关
 
 ```bash
 #查看远程仓库
@@ -914,7 +1055,7 @@ git remote rename origin upstream
 git push --set-upstream origin master
 ```
 
-### 2.分支相关
+### 3.分支相关
 
 ```bash
 #创建并切换到分支
@@ -946,5 +1087,7 @@ git commit
 git push
 
 ```
+
+
 
 ## 2、Typora常用快捷键及markdown语法
