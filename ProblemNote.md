@@ -915,6 +915,74 @@ ssh "$REMOTE_HOST" "systemctl restart '$SERVICE_NAME'"
 echo "Deployment Complete ~"
 ```
 
+## 12、Docker运行Kafka
+
+```bash
+docker run -d \
+  --name kafka \
+  --restart always \
+  -p 9092:9092 \
+  -p 9093:9093 \
+  -v kafka-data:/bitnami/kafka \
+  -e KAFKA_CFG_NODE_ID=0 \
+  -e KAFKA_CFG_PROCESS_ROLES=controller,broker \
+  -e KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+  -e KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@localhost:9093 \
+  -e KAFKA_CFG_LISTENERS=CONTROLLER://:9093,PLAINTEXT://:9092 \
+  -e KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
+  -e KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT \
+  --health-cmd='kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1' \
+  --health-interval=30s \
+  --health-timeout=10s \
+  --health-retries=5 \
+  --health-start-period=60s \
+  bitnami/kafka:latest \
+  sh -c "/opt/bitnami/scripts/kafka/run.sh & \
+    echo 'Waiting for Kafka to start...' && \
+    while ! kafka-topics.sh --bootstrap-server localhost:9092 --list 2>/dev/null; do sleep 2; done && \
+    echo 'Creating topic: file-processing' && \
+    kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic file-processing 2>/dev/null || true && \
+    echo 'Creating topic: vectorization' && \
+    kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic vectorization 2>/dev/null || true && \
+    tail -f /dev/null"
+```
+
+## 13、Docker运行Elasticsearch
+
+```bash
+docker run -d \
+  --name es \
+  --restart always \
+  -p 9200:9200 \
+  -v es-data:/usr/share/elasticsearch/data \
+  -e ELASTIC_PASSWORD=yourpassword \
+  -e node.name=es01 \
+  -e discovery.type=single-node \
+  -e xpack.license.self_generated.type=basic \
+  -e xpack.security.enabled=true \
+  -e xpack.security.enrollment.enabled=false \
+  -e xpack.security.http.ssl.enabled=false \
+  -e cluster.name=pai-smart-es-cluster \
+  -e ES_JAVA_OPTS="-Xms2g -Xmx2g" \
+  --memory=2g \
+  --health-cmd="curl -s http://localhost:9200/_cluster/health?pretty || exit 1" \
+  --health-interval=30s \
+  --health-timeout=10s \
+  --health-retries=3 \
+  elasticsearch:8.10.4 \
+  bash -c "if ! elasticsearch-plugin list | grep -q 'analysis-ik'; then \
+      echo 'Installing analysis-ik plugin...'; \
+      elasticsearch-plugin install --batch https://release.infinilabs.com/analysis-ik/stable/elasticsearch-analysis-ik-8.10.4.zip; \
+    else \
+      echo 'analysis-ik plugin already installed.'; \
+    fi; \
+    /usr/local/bin/docker-entrypoint.sh"
+```
+
+
+
+
+
 
 
 
