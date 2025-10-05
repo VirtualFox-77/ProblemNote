@@ -628,7 +628,7 @@ services:
       - MODE=standalone  # 单机模式
       - PREFER_IPv4_STACK=true
       - SPRING_DATASOURCE_PLATFORM=mysql
-      - MYSQL_SERVICE_HOST=192。168.0.2
+      - MYSQL_SERVICE_HOST=192.168.0.2
       - MYSQL_SERVICE_DB_NAME=nacos
       - MYSQL_SERVICE_PORT=3306
       - MYSQL_SERVICE_USER=nacos
@@ -1009,8 +1009,8 @@ docker run -d \
 git config user.name
 git config user.email
 #如果之前没有创建，则执行以下命令：
-git config –global user.name "xxxxxx"
-git config –global user.email "xxx@xx.xxx"
+git config –-global user.name "xxxxxx"
+git config –-global user.email "xxx@xx.xxx"
 #生成秘钥
 ssh-keygen -t rsa -C "xxxx@xx.xxx"
 #代码参数含义：

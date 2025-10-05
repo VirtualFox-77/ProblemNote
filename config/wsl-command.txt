@@ -1,0 +1,9 @@
+# MySQL
+docker run --name mysql --memory 2gb -itd -p 3306:3306 --restart unless-stopped -v /mnt/e/wsl-docker/mysql/log:/var/log/mysql -v /mnt/e/wsl-docker/mysql/data:/var/libysql -v /mnt/e/wsl-docker/mysql/conf/my.cnf:/etc/mysql/my.cnf -v /etc/localtime:/etc/localtime:ro -e MYSQL_ROOT_PASSWORD=123456 mysql/mysql-server:8.0
+
+# Redis
+docker run --restart=unless-stopped --memory 2gb -itd -p 6379:6379 --name redis -v /mnt/e/wsl-docker/redis/conf/redis.conf:/etc/redis/redis.conf -v /mnt/e/wsl-docker/redis/data:/data -v /mnt/e/wsl-docker/redis/log:/var/log/redis redis:8.2.0 redis-server /etc/redis/redis.conf
+
+# Nacos
+docker run -d   --name nacos-single   --restart unless-stopped   -p 8848:8848   -p 9848:9848   -e MODE=standalone   -e PREFER_IPv4_STACK=true   -e SPRING_DATASOURCE_PLATFORM=mysql   -e MYSQL_SERVICE_HOST=192.168.0.2   -e MYSQL_SERVICE_DB_NAME=nacos   -e MYSQL_SERVICE_PORT=3306   -e MYSQL_SERVICE_USER=nacos   -e MYSQL_SERVICE_PASSWORD=nacos   -e MYSQL_SERVICE_DB_PARAM="characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useUnicode=true&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true"   -e NACOS_AUTH_IDENTITY_KEY=nacos   -e NACOS_AUTH_IDENTITY_VALUE=nacos   -e NACOS_AUTH_TOKEN=SecretKey012345678901234567890123456789012345678901234567890123456789   -e NACOS_AUTH_ENABLE=true   -e NACOS_AUTH_TOKEN_EXPIRE_SECONDS=18000   -v /mnt/e/wsl-docker/nacos/data:/home/nacos/data   -v /mnt/e/wsl-docker/nacos/logs:/home/nacos/logs   --memory=2g   nacos/nacos-server:v2.5.0
+
