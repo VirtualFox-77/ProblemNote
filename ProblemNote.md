@@ -297,26 +297,27 @@ docker search mysql
 docker pull mysql:latest
 
 #创建对应要存储到本机的数据文件夹
-mkdir -p ~/Documents/mydata/mysql/{conf,data,log}
+mkdir -p  ~/mydata/mysql/{conf,data,log}
 
 #新建MySQL配置文件
-vim ~/Documents/mydata/mysql/conf/my.cnf
+vim  ~/mydata/mysql/conf/my.cnf
 ```
 
 [Docker-MySQL配置文件](..\ProblemNote\config\docker-my.cnf)
 
 ```shell
-sudo chown -R kevin:kevin ~/Documents/mydata/mysql/log ~/Documents/mydata/mysql/data ~/Documents/mydata/mysql/conf ~/Documents/mydata/mysql/conf/my.cnf
+sudo chown -R kevin:kevin  ~/mydata/mysql/log  ~/mydata/mysql/data  ~/mydata/mysql/conf  ~/mydata/mysql/conf/my.cnf
 
 #docker运行容器命令
 docker run \
 --name mysql \
 --memory 2gb \
 -itd -p 3306:3306 \
+--user mysql_user \
 --restart unless-stopped \
--v ~/Documents/mydata/mysql/log:/var/log/mysql \
--v ~/Documents/mydata/mysql/data:/var/lib/mysql \
--v ~/Documents/mydata/mysql/conf/my.cnf:/etc/mysql/my.cnf \
+-v  ~/mydata/mysql/log:/var/log/mysql \
+-v  ~/mydata/mysql/data:/var/lib/mysql \
+-v  ~/mydata/mysql/conf/my.cnf:/etc/mysql/my.cnf \
 -v /etc/localtime:/etc/localtime:ro \
 -e MYSQL_ROOT_PASSWORD=123456 \
 mysql/mysql-server:8.0
@@ -502,9 +503,9 @@ docker search redis:8.2.0
 #拉取对应版本的镜像 这里还是最新版本
 docker pull redis:8.2.0
 
-mkdir -p ~/Documents/mydata/redis/{conf,data,log}
+mkdir -p  ~/mydata/redis/{conf,data,log}
 #开始写配置文件
-vim ~/Documents/mydata/redis/conf/redis.conf
+vim  ~/mydata/redis/conf/redis.conf
 
 ```
 
@@ -519,7 +520,7 @@ vim ~/Documents/mydata/redis/conf/redis.conf
 5)maxmemory 2gb
 6)dir /data
 #接着修改权限
-sudo chown -R kevin:kevin ~/Documents/mydata/redis/log ~/Documents/mydata/redis/data ~/Documents/mydata/redis/conf ~/Documents/mydata/redis/conf/redis.conf
+sudo chown -R kevin:kevin  ~/mydata/redis/log  ~/mydata/redis/data  ~/mydata/redis/conf  ~/mydata/redis/conf/redis.conf
 
 #开启防火墙
 firewall-cmd --zone=public --add-port=6379/tcp --permanent
@@ -530,9 +531,9 @@ docker run \
 --memory 2gb \
 -itd -p 6379:6379 \
 --name redis \
--v ~/Documents/mydata/redis/conf:/etc/redis \
--v ~/Documents/mydata/redis/data:/data \
--v ~/Documents/mydata/redis/log:/var/log/redis \
+-v  ~/mydata/redis/conf:/etc/redis \
+-v  ~/mydata/redis/data:/data \
+-v  ~/mydata/redis/log:/var/log/redis \
 redis:8.2.0 redis-server /etc/redis/redis.conf
 #查看状态
 docker ps -a 
@@ -614,8 +615,8 @@ docker exec -it rmqbroker bash -c "tail -n 10 /home/rocketmq/logs/rocketmqlogs/p
 首先创建配置目录
 
 ```bash
-mkdir -p ~/Documents/mydata/nacos/{data,logs}
-cd ~/Documents/mydata/nacos
+mkdir -p  ~/mydata/nacos/{data,logs}
+cd  ~/mydata/nacos
 vim docker-compose.yml
 ```
 
