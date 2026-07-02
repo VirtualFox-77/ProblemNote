@@ -534,10 +534,10 @@ docker run \
 -v  ~/mydata/redis/conf:/etc/redis \
 -v  ~/mydata/redis/data:/data \
 -v  ~/mydata/redis/log:/var/log/redis \
+-v  ~/mydata/redis/log/redis-server.log:/var/log/redis/redis-server.log \
 redis:8.2.0 redis-server /etc/redis/redis.conf
 #查看状态
 docker ps -a 
-
 ```
 
 daemonize no (这个与容器冲突，无法启动) 找这个错找了一下午，疯了我真是。
@@ -653,7 +653,6 @@ services:
 #### 8.1.2、启动服务
 
 ```bash
-docker-compose up -d #docker v20.0以前的方式
 docker compose up -d #docker v20.0+的方式
 ```
 
@@ -698,6 +697,7 @@ Description=Your Application Description~
 After=network.target
 
 [Service]
+#可以用自己的用户名
 User=root
 #EnvironmentSettings
 Environment=JAVA_HOME=/opt/jdk8
@@ -745,8 +745,10 @@ WantedBy=multi-user.target
 
   - Jenkins用户权限
 
-    - 设置jenkins用户 用mv、cp、ssh、scp不用sudo
+    - 移交命令行启动到系统服务管理（详见上一节）
 
+    - 设置jenkins用户 用mv、cp、ssh、scp不用sudo
+  
       ```bash
       #以下命令是以RockyLinux 9.4版本为例
       #以 root 用户新建一个文件
@@ -764,8 +766,6 @@ WantedBy=multi-user.target
       #这行配置表示 Jenkins 用户可以在不输入密码的情况下运行 /bin/mv、/bin/cp、/usr/bin/ssh 和 /usr/bin/scp
       :wq
       ```
-
-  - 移交命令行启动到系统服务管理（详见上一节）
 
 - 首先配置好基本的环境（包括JDK、Maven、Git私钥）
   - JDK
