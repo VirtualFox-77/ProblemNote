@@ -1,15 +1,96 @@
 services:
-  nacos:
-    image: nacos/nacos-server:v2.5.0  # 使用2.5.0 高了有问题
-    container_name: nacos-single
+  mysql:
+    image: mysql:8.4
+    container_name: mysql
+    restart: unless-stopped
     environment:
-      - MODE=standalone  # 单机模式
-      - PREFER_IPv4_STACK=true
+      TZ: ${TZ}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
-      - "8848:8848"     # Nacos 服务端口
-      - "9848:9848"     # Nacos 安全端口（可选）
+      - "3306:3306"
     volumes:
-      - ./data:/home/nacos/data  # 持久化数据
-      - ./logs:/home/nacos/logs  # 日志目录
-    restart: always
-    mem_limit: 2g  # 限制容器内存为 2GB
+      - ~/docker/data/mysql:/var/lib/mysql
+      - ~/docker/config/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ~/docker/logs/mysql:/var/log/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-uroot",
+          "-p$${MYSQL_ROOT_PASSWORD}",
+        ]
+      interval: 30s
+      retries: 5
+    networks:
+      - java-network
+
+  postgres:
+    image: postgres:18.4
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ~/docker/data/pgsql:/var/lib/postgresql
+      #      - ~/docker/config/pgsql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ~/docker/logs/pgsql:/var/log/pgsql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      retries: 5
+    networks:
+      - java-network
+
+  redis:
+    image: redis:8.0
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    volumes:
+      - ~/docker/data/redis:/data
+      - ~/docker/config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      retries: 5
+    networks:
+      - java-network
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      TZ: ${TZ}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ~/docker/data/minio:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      retries: 5
+    networks:
+      - java-network
+
+networks:
+  java-network:
+    name: java-network

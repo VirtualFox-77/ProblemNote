@@ -1,62 +1,124 @@
+# 客户端配置部分
 [client]
-# 端口号
-port=3306
- 
-[mysql]
-no-beep
- 
-[mysqld]
-# 端口号
-port=3306
-# 数据目录
-datadir=/var/lib/mysql
-# 新模式或表时将使用的默认字符集
-character-set-server=utf8mb4
-# 默认存储引擎
-default-storage-engine=INNODB
-# 将 SQL 模式设置为严格
-sql_mode="STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION"
+# 设置客户端默认连接的字符集为 utf8mb4，支持完整的 UTF-8 编码，包括 emoji
+default-character-set=utf8mb4
 
-#  最大连接数
-max_connections=1024
-# 表缓存
-table_open_cache=2000
-# 表内存
+# 服务器配置部分
+[mysqld]
+# MySQL 服务器监听的 TCP 端口，默认为 3306
+port=3306
+
+# MySQL 数据文件存放的目录
+datadir=/var/lib/mysql
+
+# 设置服务器默认的字符集为 utf8mb4，确保数据存储使用正确的编码
+character-set-server=utf8mb4
+# 设置服务器默认的排序规则，适用于 utf8mb4 字符集，提供更准确的比较和排序
+collation-server=utf8mb4_0900_ai_ci
+
+# 设置新建表时默认使用的存储引擎为 InnoDB，它支持事务、行级锁定等高级功能
+default-storage-engine=InnoDB
+
+# 设置服务器默认的时区为 UTC+8 (中国标准时间)
+default-time-zone=+08:00
+
+# 设置 MySQL 服务器允许的最大并发连接数
+max_connections=300
+
+# 设置单个数据包传输的最大大小，对于导入大文件或 BLOB 数据很重要
+max_allowed_packet=64M
+
+# 设置表缓存的数量，用于缓存已打开的表，减少磁盘 I/O
+table_open_cache=4096
+# 设置表定义缓存的数量，用于缓存表的结构定义
+table_definition_cache=4096
+
+# 设置内存中内部临时表的最大大小 (MEMORY 存储引擎)，当超过此大小时会转换为 MyISAM 表
 tmp_table_size=128M
-# 线程缓存
-thread_cache_size=100
- 
-# myisam设置
-myisam_max_sort_file_size=100G
-myisam_sort_buffer_size=8M
-key_buffer_size=8M
-read_buffer_size=8KB
-read_rnd_buffer_size=0
- 
-# innodb设置
+# 设置用户创建的内存临时表的最大大小，需与 tmp_table_size 保持一致
+max_heap_table_size=128M
+
+# 设置 InnoDB 存储引擎的缓冲池大小，用于缓存数据和索引，是最重要的性能调优参数之一
+innodb_buffer_pool_size=4G 
+# 设置 InnoDB 日志缓冲区的大小，事务提交前日志会先写入此缓冲区
+innodb_log_buffer_size=64M 
+# 设置 InnoDB 重做日志的总容量，影响恢复速度和写入性能
+innodb_redo_log_capacity=1G 
+# 控制事务提交时日志写入磁盘的策略，0=延迟写入，1=每次提交刷盘(最安全)，2=每次提交写入OS缓存
 innodb_flush_log_at_trx_commit=1
-innodb_log_buffer_size=256M
-innodb_buffer_pool_size=2G
-innodb_redo_log_capacity=64M
-innodb_thread_concurrency=4
-innodb_autoextend_increment=64
-innodb_buffer_pool_instances=8
-innodb_concurrency_tickets=5000
-innodb_old_blocks_time=1000
-innodb_open_files=300
+# 启用独立表空间，每个 InnoDB 表的数据和索引存储在单独的 .ibd 文件中，便于管理
+innodb_file_per_table=ON
+
+# 设置 SQL 模式，启用严格模式和禁止引擎替换，提高数据完整性和一致性
+sql_mode=STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION
+
+# 启用慢查询日志记录功能
+slow_query_log=ON
+# 指定慢查询日志文件的路径
+slow_query_log_file=/var/log/mysql/slow.log
+# 定义慢查询的时间阈值，执行时间超过此秒数的查询将被记录
+long_query_time=2
+# 启用记录所有查询，包括没有使用索引的查询
+log_queries_not_using_indexes=ON
+
+# 指定错误日志文件的路径，记录 MySQL 运行过程中的错误信息
+log_error=/var/log/mysql/error.log
+
+# 启用二进制日志同步功能，确保主从库之间的数据一致性
+sync_binlog=100
+
+# 用于主从复制，设置唯一的服务器 ID，主库和从库必须不同
+server-id=1
+# 启用二进制日志记录功能，用于主从复制和时间点恢复
+log-bin=mysql-bin
+# 设置二进制日志的格式为 ROW，记录行的变化，更精确但日志量可能更大
+binlog_format=ROW
+# 设置二进制日志自动过期删除的时间（单位：秒）
+binlog_expire_logs_seconds=604800
+
+# 设置线程缓存池的大小，缓存空闲的连接线程，避免频繁创建销毁线程的开销
+thread_cache_size=128
+
+# 设置为 0 可以提升某些元数据操作（如 SHOW TABLE STATUS）的性能，但统计信息可能不是实时精确的
 innodb_stats_on_metadata=0
-innodb_file_per_table=1
-innodb_checksum_algorithm=0
-# 其他设置
+
+# 在 accept() 上的积压请求数，即未处理的连接请求队列大小
 back_log=80
-flush_time=0
+
+# 当 join 执行没有使用到索引时，MySQL 会分配一个 join buffer 来辅助 join 的执行
 join_buffer_size=4M
-max_allowed_packet=4M
+
+# 设置客户端连续出错达到指定次数后，服务器会阻止该主机进一步的连接请求
 max_connect_errors=100
+
+# 设置 mysqld 能够打开的文件描述符数量上限
 open_files_limit=4161
-sort_buffer_size=256K
-table_definition_cache=1400
+
+# 用于 ORDER BY 排序操作的缓冲区大小
+sort_buffer_size=2M
+
+# 用于 SELECT 查询操作的缓冲区大小
+read_buffer_size=2M
+
+# 用于 SELECT 随机读取操作的缓冲区大小
+read_rnd_buffer_size=4M
+
+# 在 Row 格式的二进制日志中，单个事件的最大大小
 binlog_row_event_max_size=8K
-sync_master_info=10000
-sync_relay_log=10000
-sync_relay_log_info=10000
+
+# 启用 O_DIRECT 优化，将数据写入磁盘时使用 O_DIRECT 模式，可以提高写入性能
+innodb_flush_method=O_DIRECT
+
+# 设置 InnoDB 磁盘 I/O 的 IOPS 带宽，影响写入性能
+innodb_io_capacity=2000
+# 设置 InnoDB 磁盘 I/O 的最大带宽，影响写入性能
+innodb_io_capacity_max=4000
+
+# 设置 InnoDB 缓冲池实例的数量，可以提高性能
+innodb_buffer_pool_instances=4
+
+# 启用自适应哈希索引，可以提高查询性能
+innodb_adaptive_hash_index=ON
+
+# 设置表名是否对大小写敏感，0=区分大小写，1=不区分大小写
+lower_case_table_names=0

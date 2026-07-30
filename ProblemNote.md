@@ -529,11 +529,13 @@ firewall-cmd --reload
 docker run \
 --restart=unless-stopped \
 --memory 2gb \
--itd -p 6379:6379 \
---name redis \
--v  ~/mydata/redis/conf:/etc/redis \
+-itd \
+--name=redis \
+-p 6379:6379 \
+-v  ~/mydata/redis/conf/redis.conf:/etc/redis/redis.conf \
 -v  ~/mydata/redis/data:/data \
 -v  ~/mydata/redis/log:/var/log/redis \
+-v  ~/mydata/redis/log/redis-server.log:/var/log/redis/redis-server.log \
 redis:8.2.0 redis-server /etc/redis/redis.conf
 #查看状态
 docker ps -a 
