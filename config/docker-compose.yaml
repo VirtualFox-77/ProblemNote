@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: mysql:8.4
+    image: mysql:${MYSQL_VERSION}
     container_name: mysql
     restart: unless-stopped
     environment:
@@ -32,7 +32,7 @@ services:
       - java-network
 
   postgres:
-    image: postgres:18.4
+    image: postgres:${POSTGRES_VERSION}
     container_name: postgres
     restart: unless-stopped
     environment:
@@ -54,7 +54,7 @@ services:
       - java-network
 
   redis:
-    image: redis:8.0
+    image: redis:${REDIS_VERSION}
     container_name: redis
     restart: unless-stopped
     ports:
@@ -71,7 +71,7 @@ services:
       - java-network
 
   minio:
-    image: quay.io/minio/minio
+    image: quay.io/minio/minio:${MINIO_VERSION}
     container_name: minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
