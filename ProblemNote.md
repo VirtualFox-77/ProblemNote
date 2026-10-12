@@ -196,7 +196,6 @@ sudo systemctl restart docker
 
 ![image-20241109232124023](./assets/image-20241109232124023.png)
 
-期待我们的大佬们整一个比DockerHub更NB的东西出来˃̣̣̥᷄⌓˂̣̣̥᷅ 
 
 ## 2、本地安装MySQL的相关配置
 
